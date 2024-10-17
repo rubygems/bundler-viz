@@ -36,11 +36,18 @@ module Bundler
 
         tmp = Set.new
         parent_dependencies.each do |dependency|
-          child_dependencies = spec_for_dependency(dependency).runtime_dependencies.to_set
+          @node_options[dependency.name] = _make_label(dependency, :node)
+
+          spec = spec_for_dependency(dependency)
+          if spec.nil?
+            $stderr.puts "Could not find dependency #{dependency.name} [group: #{dependency.groups.join(", ")}]"
+            next
+          end
+
+          child_dependencies = spec.runtime_dependencies.to_set
           @relations[dependency.name] += child_dependencies.map(&:name).to_set
           tmp += child_dependencies
 
-          @node_options[dependency.name] = _make_label(dependency, :node)
           child_dependencies.each do |c_dependency|
             @edge_options["#{dependency.name}_#{c_dependency.name}"] = _make_label(c_dependency, :edge)
           end
